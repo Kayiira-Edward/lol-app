@@ -1,8 +1,8 @@
-**LOL App
+LOL App(day 1/30)
 
 LOL App is a Next.js 13 + TypeScript + Tailwind v3 project — an anonymous chat platform designed for Gen Z fun and local culture. Users can send anonymous messages, reply to threads with limits, and unlock paid features for identity reveals, custom themes, and badges.
 
-*Features
+Features
 
 Send and receive anonymous messages.
 
@@ -14,7 +14,7 @@ Localized for Uganda campus communities and Gen Z culture.
 
 Future-ready for business/organization tiers.
 
-*Project Structure
+📂 Project Structure
 src/
  ├─ app/
  │   ├─ page.tsx
@@ -26,7 +26,7 @@ src/
  ├─ services/     # Firebase & payment integrations
  └─ utils/        # Helper functions & constants
 
-🛠 Tech Stack
+Tech Stack
 
 Next.js 13 – App Router structure
 
