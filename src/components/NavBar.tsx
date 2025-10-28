@@ -17,11 +17,11 @@ export default function NavBar() {
         >Contact Us</Link>
       </div>
       <div className="items-center hidden space-x-4 lg:block">
-        <Link href="/send"
+        <Link href="/auth/register"
          className="px-4 py-2 font-medium text-blue-600 transition-colors bg-blue-100 hover:text-blue-1000 rounded-xl hover:bg-blue-200">
-        SignUp
+        Register
         </Link>
-        <Link href="/login"
+        <Link href="/auth/login"
          className="px-4 py-2 font-medium text-white transition-colors bg-blue-600 rounded-xl hover:bg-blue-400">
         Login
         </Link>
