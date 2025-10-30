@@ -1,0 +1,128 @@
+// firestore.rules
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             request.auth.token.email.matches('.*@(gmail\\.com|admin\\.lolapp\\.me)$') &&
+             request.auth.token.email in ['edwardbrin1@gmail.com', 'edwardkayiira0@gmail.com'];
+    }
+    
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidUserData() {
+      return request.resource.data.keys().hasAll(['username', 'displayName', 'lolId', 'pro', 'balance', 'createdAt']) &&
+             request.resource.data.username is string &&
+             request.resource.data.displayName is string &&
+             request.resource.data.lolId is string &&
+             request.resource.data.pro is bool &&
+             request.resource.data.balance is number &&
+             request.resource.data.createdAt is number;
+    }
+    
+    function isValidMessage() {
+      return request.resource.data.keys().hasAll(['text', 'senderId', 'timestamp']) &&
+             request.resource.data.text is string &&
+             request.resource.data.text.size() <= 500 &&
+             request.resource.data.senderId is string &&
+             request.resource.data.timestamp is number;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if true; // Public profiles can be read by anyone
+      allow create: if isUser(userId) && isValidUserData();
+      allow update: if isUser(userId) && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'pro', 'balance']);
+      allow delete: if isAdmin();
+    }
+
+    // Messages subcollections (anonymous messaging)
+    match /messages/{receiverId}/threads/{threadId}/messages/{messageId} {
+      allow create: if 
+        // Anyone can send anonymous messages
+        isValidMessage() &&
+        request.resource.data.text.size() > 0 &&
+        request.resource.data.text.size() <= 500;
+      
+      allow read: if 
+        // Receiver can read messages sent to them
+        isUser(receiverId) || 
+        // Sender can read their own messages (if authenticated)
+        (isAuthenticated() && resource.data.senderId == request.auth.uid) ||
+        // Admins can read all messages
+        isAdmin();
+      
+      allow update: if 
+        // Only allow reaction updates
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']) &&
+        // Users can only update reactions on messages they can read
+        (isUser(receiverId) || isAdmin());
+      
+      allow delete: if isAdmin(); // Only admins can delete messages
+    }
+
+    // Communities collection
+    match /communities/{communityId} {
+      allow read: if true; // All communities are publicly readable
+      allow create: if isAuthenticated() && 
+        request.resource.data.keys().hasAll(['title', 'description', 'type', 'membersCount', 'createdAt']);
+      allow update: if 
+        // Community creators or admins can update
+        resource.data.ownerId == request.auth.uid || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Community posts/messages
+    match /communities/{communityId}/posts/{postId}/messages/{messageId} {
+      allow read: if true; // Public community messages
+      allow create: if isAuthenticated() && isValidMessage();
+      allow update: if 
+        // Only allow reaction updates and only by authenticated users
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']) &&
+        isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    // Payments collection (admin only)
+    match /payments/{paymentId} {
+      allow read: if isAdmin();
+      allow create: if 
+        // Only server (via admin SDK) can create payment records
+        request.auth != null && 
+        request.auth.uid == "server"; // This would require Firebase Admin SDK
+      allow update: if isAdmin();
+      allow delete: if false; // Payments should never be deleted
+    }
+
+    // Analytics/Stats collection
+    match /stats/{document} {
+      allow read: if isAdmin();
+      allow write: if false; // Only updated via server functions
+    }
+
+    // User settings subcollection
+    match /users/{userId}/settings/{settingId} {
+      allow read, write: if isUser(userId);
+    }
+
+    // User blocked users subcollection
+    match /users/{userId}/blocked/{blockedId} {
+      allow read, write: if isUser(userId);
+    }
+
+    // Reports collection
+    match /reports/{reportId} {
+      allow create: if isAuthenticated() && 
+        request.resource.data.keys().hasAll(['type', 'targetId', 'reason', 'createdAt']);
+      allow read, update: if isAdmin();
+    }
+  }
+}

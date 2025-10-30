@@ -1,0 +1,126 @@
+// firestore.indexes.json
+{
+    "indexes": [
+      // Users collection indexes
+      {
+        "collectionGroup": "users",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "lolId", "order": "ASCENDING" },
+          { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+      },
+      {
+        "collectionGroup": "users",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "username", "order": "ASCENDING" },
+          { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+      },
+  
+      // Communities indexes
+      {
+        "collectionGroup": "communities",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "membersCount", "order": "DESCENDING" },
+          { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+      },
+      {
+        "collectionGroup": "communities",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "title", "order": "ASCENDING" },
+          { "fieldPath": "membersCount", "order": "DESCENDING" }
+        ]
+      },
+      {
+        "collectionGroup": "communities",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "type", "order": "ASCENDING" },
+          { "fieldPath": "membersCount", "order": "DESCENDING" }
+        ]
+      },
+  
+      // Messages indexes (for user threads)
+      {
+        "collectionGroup": "messages",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "timestamp", "order": "DESCENDING" }
+        ]
+      },
+      {
+        "collectionGroup": "messages",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "senderId", "order": "ASCENDING" },
+          { "fieldPath": "timestamp", "order": "DESCENDING" }
+        ]
+      },
+  
+      // Community posts indexes
+      {
+        "collectionGroup": "posts",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "timestamp", "order": "DESCENDING" }
+        ]
+      },
+      {
+        "collectionGroup": "posts",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "communityId", "order": "ASCENDING" },
+          { "fieldPath": "timestamp", "order": "DESCENDING" }
+        ]
+      },
+  
+      // Payments indexes (admin queries)
+      {
+        "collectionGroup": "payments",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+      },
+      {
+        "collectionGroup": "payments",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "status", "order": "ASCENDING" },
+          { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+      },
+      {
+        "collectionGroup": "payments",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "userId", "order": "ASCENDING" },
+          { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+      },
+  
+      // Reports indexes
+      {
+        "collectionGroup": "reports",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+      },
+      {
+        "collectionGroup": "reports",
+        "queryScope": "COLLECTION",
+        "fields": [
+          { "fieldPath": "status", "order": "ASCENDING" },
+          { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+      }
+    ],
+    
+    "fieldOverrides": []
+  }

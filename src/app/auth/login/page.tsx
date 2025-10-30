@@ -1,154 +1,120 @@
-"use client";
-import Link from "next/link";
-import { useState } from "react";
+// src/app/auth/login/page.tsx
+'use client'
+
+import { useState } from 'react'
+import { loginUser } from '@/services/auth'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [passwordStrength, setPasswordStrength] = useState("");
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
 
-  // Password strength check
-  const checkPasswordStrength = (password: string) => {
-    const strongRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+={}[\]|\\:;"'<>,.?/~`-]).{6,}$/;
-    if (!password) return "";
-    if (strongRegex.test(password)) return "Strong ✅";
-    if (password.length >= 6) return "Medium ⚡";
-    return "Weak ❌";
-  };
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setIsLoading(true)
+    setError('')
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (!form.email.includes("@")) {
-      setError("Please enter a valid email");
-      return;
+    const result = await loginUser(email, password)
+    
+    if (result.success) {
+      router.push('/')
+    } else {
+      setError(result.error || 'Login failed')
     }
-
-    if (form.password.length < 6) {
-      setError("Password must be at least 6 characters");
-      return;
-    }
-
-    if (checkPasswordStrength(form.password) === "Weak ❌") {
-      setError(
-        "Password too weak. Use uppercase, number & special character"
-      );
-      return;
-    }
-
-    console.log("Logging in:", form);
-    // Firebase login call here later
-  };
+    
+    setIsLoading(false)
+  }
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-purple-100 via-pink-100 to-orange-100">
-      <div className="bg-white/95 p-10 rounded-3xl shadow-2xl w-full max-w-md transform transition-all hover:scale-[1.01]">
-        <h1 className="mb-6 text-3xl font-bold text-center text-purple-600">
-          Welcome Back 👋
-        </h1>
+    <div className="flex items-center justify-center min-h-screen p-6 bg-gray-900">
+      <div className="w-full max-w-md p-8 glass-card">
+        {/* Status Bar */}
+        <div className="mb-8 text-sm text-center text-gray-400">
+          9:41
+        </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Email */}
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full px-4 py-2 border rounded-md outline-none focus:ring-2 focus:ring-purple-400"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
-          />
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-3xl font-bold gradient-text">
+            Welcome Back
+          </h1>
+          <p className="text-sm text-gray-400">
+            Sign in to your LOL App account
+          </p>
+        </div>
 
-          {/* Password */}
-          <div className="relative">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              className="w-full px-4 py-2 pr-10 border rounded-md outline-none focus:ring-2 focus:ring-purple-400"
-              value={form.password}
-              onChange={(e) => {
-                setForm({ ...form, password: e.target.value });
-                setPasswordStrength(checkPasswordStrength(e.target.value));
-              }}
-              required
-            />
-            <button
-              type="button"
-              className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M1 1l22 22" />
-                  <path d="M17.94 17.94A10.97 10.97 0 0 1 12 19c-5 0-9.27-3-11-7 1.21-2.86 3.57-5.13 6.23-6.32" />
-                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              )}
-            </button>
-          </div>
-
-          {/* Password strength feedback */}
-          {passwordStrength && !error && (
-            <p
-              className={`text-sm mt-1 ${
-                passwordStrength.includes("Strong")
-                  ? "text-green-500"
-                  : passwordStrength.includes("Medium")
-                  ? "text-yellow-500"
-                  : "text-red-500"
-              }`}
-            >
-              {passwordStrength}
-            </p>
+        {/* Login Form */}
+        <form onSubmit={handleLogin} className="space-y-6">
+          {error && (
+            <div className="px-4 py-3 text-sm text-red-300 border border-red-600 bg-red-600/20 rounded-2xl">
+              {error}
+            </div>
           )}
 
-          {/* Error */}
-          {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-300">
+              Email
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full px-4 py-3 text-white placeholder-gray-400 transition-all bg-gray-800 border border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              placeholder="Enter your email"
+            />
+          </div>
 
-          {/* Submit */}
-          <button className="w-full py-3 font-semibold text-white transition-all bg-purple-600 shadow-md rounded-xl hover:bg-purple-700">
-            Login
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-300">
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full px-4 py-3 text-white placeholder-gray-400 transition-all bg-gray-800 border border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              placeholder="Enter your password"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-3 font-medium text-white transition-all gradient-bg rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+          >
+            {isLoading ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
 
-        <div className="flex justify-between mt-4 text-sm text-gray-600">
-          <Link href="/auth/register" className="text-purple-600 hover:underline">
-            Register
-          </Link>
-          <button
-            type="button"
-            className="text-purple-600 hover:underline"
-            onClick={() => alert("Forgot password flow coming soon!")}
-          >
-            Forgot Password?
-          </button>
+        {/* Divider */}
+        <div className="flex items-center my-6">
+          <div className="flex-1 border-t border-gray-700"></div>
+          <div className="px-3 text-sm text-gray-400">or</div>
+          <div className="flex-1 border-t border-gray-700"></div>
+        </div>
+
+        {/* Sign Up Link */}
+        <div className="text-center">
+          <p className="text-sm text-gray-400">
+            Don't have an account?{' '}
+            <a href="/auth/register" className="font-medium text-purple-400 hover:text-purple-300">
+              Sign up
+            </a>
+          </p>
+        </div>
+
+        {/* Demo Info */}
+        <div className="p-4 mt-8 bg-gray-800/50 rounded-2xl">
+          <p className="text-xs text-center text-gray-400">
+            Demo: Use any email/password for testing. Real auth connects to Firebase.
+          </p>
         </div>
       </div>
     </div>
-  );
+  )
 }

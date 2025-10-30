@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             request.auth.token.email.matches('.*@(gmail\\.com|admin\\.lolapp\\.me)$') &&
+             request.auth.token.email in ['edwardbrin1@gmail.com', 'edwardkayiira0@gmail.com'];
+    }
+    
+    function isUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidUserData() {
+      return request.resource.data.keys().hasAll(['username', 'displayName', 'lolId', 'pro', 'balance', 'createdAt']) &&
+             request.resource.data.username is string &&
+             request.resource.data.displayName is string &&
+             request.resource.data.lolId is string &&
+             request.resource.data.pro is bool &&
+             request.resource.data.balance is number &&
+             request.resource.data.createdAt is number;
+    }
+    
+    function isValidMessage() {
+      return request.resource.data.keys().hasAll(['text', 'senderId', 'timestamp']) &&
+             request.resource.data.text is string &&
+             request.resource.data.text.size() <= 500 &&
+             request.resource.data.senderId is string &&
+             request.resource.data.timestamp is number;
+    }
+
+    match /users/{userId} {
+      allow read: if true;
+      allow create: if isUser(userId) && isValidUserData();
+      allow update: if isUser(userId) && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'pro', 'balance']);
+      allow delete: if isAdmin();
+    }
+
+    match /messages/{receiverId}/threads/{threadId}/messages/{messageId} {
+      allow create: if 
+        isValidMessage() &&
+        request.resource.data.text.size() > 0 &&
+        request.resource.data.text.size() <= 500;
+      
+      allow read: if 
+        isUser(receiverId) || 
+        (isAuthenticated() && resource.data.senderId == request.auth.uid) ||
+        isAdmin();
+      
+      allow update: if 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']) &&
+        (isUser(receiverId) || isAdmin());
+      
+      allow delete: if isAdmin();
+    }
+
+    match /communities/{communityId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && 
+        request.resource.data.keys().hasAll(['title', 'description', 'type', 'membersCount', 'createdAt']);
+      allow update: if 
+        resource.data.ownerId == request.auth.uid || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /communities/{communityId}/posts/{postId}/messages/{messageId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidMessage();
+      allow update: if 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']) &&
+        isAuthenticated();
+      allow delete: if isAdmin();
+    }
+
+    match /payments/{paymentId} {
+      allow read: if isAdmin();
+      allow create: if 
+        request.auth != null && 
+        request.auth.uid == "server";
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+
+    match /stats/{document} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    match /users/{userId}/settings/{settingId} {
+      allow read, write: if isUser(userId);
+    }
+
+    match /users/{userId}/blocked/{blockedId} {
+      allow read, write: if isUser(userId);
+    }
+
+    match /reports/{reportId} {
+      allow create: if isAuthenticated() && 
+        request.resource.data.keys().hasAll(['type', 'targetId', 'reason', 'createdAt']);
+      allow read, update: if isAdmin();
+    }
+  }
+}

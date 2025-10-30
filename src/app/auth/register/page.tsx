@@ -1,251 +1,176 @@
-"use client";
-import Link from "next/link";
-import { useState } from "react";
+// src/app/auth/register/page.tsx
+'use client'
+
+import { useState } from 'react'
+import { registerUser } from '@/services/auth'
+import { useRouter } from 'next/navigation'
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({
-    username: "",
-    email: "",
-    password: "",
-    confirm: "",
-  });
+  const [formData, setFormData] = useState({
+    displayName: '',
+    email: '',
+    password: '',
+    confirmPassword: ''
+  })
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
 
-  const [errors, setErrors] = useState({
-    username: "",
-    password: "",
-    confirm: "",
-  });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }))
+  }
 
-  const [passwordStrength, setPasswordStrength] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-
-  // Mock existing usernames
-  const existingUsernames = ["edward", "marz", "lolapp"];
-
-  const checkPasswordStrength = (password: string) => {
-    const strongRegex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+={}[\]|\\:;"'<>,.?/~`-]).{6,}$/;
-    if (!password) return "";
-    if (strongRegex.test(password)) return "Strong ✅";
-    if (password.length >= 6) return "Medium ⚡";
-    return "Weak ❌";
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    setErrors({ username: "", password: "", confirm: "" });
-
-    let hasError = false;
-
-    // Username availability
-    if (existingUsernames.includes(form.username.toLowerCase())) {
-      setErrors((prev) => ({ ...prev, username: "Username already taken" }));
-      hasError = true;
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match')
+      return
     }
 
-    // Password validation
-    if (form.password.length < 6) {
-      setErrors((prev) => ({
-        ...prev,
-        password: "Password must be at least 6 characters",
-      }));
-      hasError = true;
-    } else if (checkPasswordStrength(form.password) === "Weak ❌") {
-      setErrors((prev) => ({
-        ...prev,
-        password: "Password too weak. Add uppercase, number & special char",
-      }));
-      hasError = true;
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters')
+      return
     }
 
-    // Confirm password match
-    if (form.password !== form.confirm) {
-      setErrors((prev) => ({ ...prev, confirm: "Passwords do not match" }));
-      hasError = true;
-    }
+    setIsLoading(true)
+    setError('')
 
-    if (!hasError) {
-      console.log("Registering user:", form);
-      // Firebase register call here later
+    const result = await registerUser(formData.email, formData.password, formData.displayName)
+    
+    if (result.success) {
+      router.push('/')
+    } else {
+      setError(result.error || 'Registration failed')
     }
-  };
+    
+    setIsLoading(false)
+  }
 
   return (
-    <div className="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-purple-100 via-pink-100 to-orange-100">
-      <div className="bg-white/95 p-10 rounded-3xl shadow-2xl w-full max-w-md transform transition-all hover:scale-[1.01]">
-        <h1 className="mb-6 text-3xl font-bold text-center text-purple-600">
-          Create Your LOL Account ✨
-        </h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Username */}
+    <div className="flex items-center justify-center min-h-screen p-6 bg-gray-900">
+      <div className="w-full max-w-md p-8 glass-card">
+        {/* Status Bar */}
+        <div className="mb-8 text-sm text-center text-gray-400">
+          9:41
+        </div>
+
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <h1 className="mb-2 text-3xl font-bold gradient-text">
+            Join LOL App
+          </h1>
+          <p className="text-sm text-gray-400">
+            Create your anonymous chat account
+          </p>
+        </div>
+
+        {/* Register Form */}
+        <form onSubmit={handleRegister} className="space-y-6">
+          {error && (
+            <div className="px-4 py-3 text-sm text-red-300 border border-red-600 bg-red-600/20 rounded-2xl">
+              {error}
+            </div>
+          )}
+
           <div>
+            <label className="block mb-2 text-sm font-medium text-gray-300">
+              Display Name
+            </label>
             <input
               type="text"
-              placeholder="Username"
-              className={`w-full px-4 py-2 rounded-md border focus:ring-2 focus:ring-purple-400 outline-none ${
-                errors.username ? "border-red-500" : ""
-              }`}
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              name="displayName"
+              value={formData.displayName}
+              onChange={handleChange}
               required
+              className="w-full px-4 py-3 text-white placeholder-gray-400 transition-all bg-gray-800 border border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              placeholder="How should we call you?"
             />
-            {errors.username && (
-              <p className="mt-1 text-sm text-red-500">{errors.username}</p>
-            )}
           </div>
 
-          {/* Email */}
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full px-4 py-2 border rounded-md outline-none focus:ring-2 focus:ring-purple-400"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
-          />
-
-          {/* Password */}
-          <div className="relative">
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-300">
+              Email
+            </label>
             <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              className={`w-full px-4 py-2 rounded-md border focus:ring-2 focus:ring-purple-400 outline-none pr-10 ${
-                errors.password ? "border-red-500" : ""
-              }`}
-              value={form.password}
-              onChange={(e) => {
-                setForm({ ...form, password: e.target.value });
-                setPasswordStrength(checkPasswordStrength(e.target.value));
-              }}
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
               required
+              className="w-full px-4 py-3 text-white placeholder-gray-400 transition-all bg-gray-800 border border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              placeholder="Enter your email"
             />
-            <button
-              type="button"
-              className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M1 1l22 22" />
-                  <path d="M17.94 17.94A10.97 10.97 0 0 1 12 19c-5 0-9.27-3-11-7 1.21-2.86 3.57-5.13 6.23-6.32" />
-                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              )}
-            </button>
           </div>
 
-          {/* Password strength feedback */}
-          {passwordStrength && !errors.password && (
-            <p
-              className={`text-sm mt-1 ${
-                passwordStrength.includes("Strong")
-                  ? "text-green-500"
-                  : passwordStrength.includes("Medium")
-                  ? "text-yellow-500"
-                  : "text-red-500"
-              }`}
-            >
-              {passwordStrength}
-            </p>
-          )}
-          {errors.password && (
-            <p className="mt-1 text-sm text-red-500">{errors.password}</p>
-          )}
-
-          {/* Confirm Password */}
-          <div className="relative">
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-300">
+              Password
+            </label>
             <input
-              type={showConfirm ? "text" : "password"}
-              placeholder="Confirm Password"
-              className={`w-full px-4 py-2 rounded-md border focus:ring-2 focus:ring-purple-400 outline-none pr-10 ${
-                errors.confirm ? "border-red-500" : ""
-              }`}
-              value={form.confirm}
-              onChange={(e) => setForm({ ...form, confirm: e.target.value })}
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
               required
+              className="w-full px-4 py-3 text-white placeholder-gray-400 transition-all bg-gray-800 border border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              placeholder="Create a password (min 6 characters)"
             />
-            <button
-              type="button"
-              className="absolute right-2 top-2.5 text-gray-500 hover:text-gray-700"
-              onClick={() => setShowConfirm(!showConfirm)}
-            >
-              {showConfirm ? (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M1 1l22 22" />
-                  <path d="M17.94 17.94A10.97 10.97 0 0 1 12 19c-5 0-9.27-3-11-7 1.21-2.86 3.57-5.13 6.23-6.32" />
-                  <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
-                </svg>
-              ) : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                  <circle cx="12" cy="12" r="3" />
-                </svg>
-              )}
-            </button>
           </div>
-          {errors.confirm && (
-            <p className="mt-1 text-sm text-red-500">{errors.confirm}</p>
-          )}
 
-          {/* Submit */}
+          <div>
+            <label className="block mb-2 text-sm font-medium text-gray-300">
+              Confirm Password
+            </label>
+            <input
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+              className="w-full px-4 py-3 text-white placeholder-gray-400 transition-all bg-gray-800 border border-gray-700 rounded-2xl focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+              placeholder="Confirm your password"
+            />
+          </div>
+
           <button
             type="submit"
-            className="w-full py-3 font-semibold text-white transition-all bg-purple-600 shadow-md rounded-xl hover:bg-purple-700"
+            disabled={isLoading}
+            className="w-full py-3 font-medium text-white transition-all gradient-bg rounded-2xl disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
           >
-            Register
+            {isLoading ? 'Creating Account...' : 'Create Account'}
           </button>
         </form>
 
-        <p className="mt-4 text-sm text-center text-gray-600">
-          Already have an account?{" "}
-          <Link href="/auth/login" className="text-purple-600 hover:underline">
-            Login
-          </Link>
-        </p>
+        {/* Divider */}
+        <div className="flex items-center my-6">
+          <div className="flex-1 border-t border-gray-700"></div>
+          <div className="px-3 text-sm text-gray-400">or</div>
+          <div className="flex-1 border-t border-gray-700"></div>
+        </div>
+
+        {/* Login Link */}
+        <div className="text-center">
+          <p className="text-sm text-gray-400">
+            Already have an account?{' '}
+            <a href="/auth/login" className="font-medium text-purple-400 hover:text-purple-300">
+              Sign in
+            </a>
+          </p>
+        </div>
+
+        {/* Terms */}
+        <div className="mt-6 text-center">
+          <p className="text-xs text-gray-500">
+            By creating an account, you agree to our{' '}
+            <a href="#" className="text-purple-400">Terms</a> and{' '}
+            <a href="#" className="text-purple-400">Privacy Policy</a>
+          </p>
+        </div>
       </div>
     </div>
-  );
+  )
 }

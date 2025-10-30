@@ -1,19 +1,26 @@
+// src/app/layout.tsx
 import './globals.css'
+import { Inter } from 'next/font/google'
+
+const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'LOL App',
-  description: 'Anonymous Chat App',
-  icons: {
-    icon: '/fav_lol.png', // points to public/icon.png
-  },
+  title: 'LOL App - Anonymous Chat & Communities',
+  description: 'Send anonymous messages, join communities, chat with Gen Z',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
-      <body className="bg-[#f9fafb] text-gray-800 min-h-screen">
-        {children}
+      <body className={`${inter.className} bg-gray-950 text-white min-h-screen`}>
+        <div className="max-w-md min-h-screen mx-auto bg-gray-900 shadow-xl">
+          {children}
+        </div>
       </body>
     </html>
-  );
+  )
 }
