@@ -1,10 +1,11 @@
 // src/app/profile/page.tsx
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 export default function ProfilePage() {
-  const [user] = useState({
+  const [user, setUser] = useState({
     displayName: 'Edward',
     username: 'edwardbrin',
     lolId: '8f2d3k',
@@ -14,12 +15,38 @@ export default function ProfilePage() {
     messagesSent: 47,
     communitiesJoined: 3
   })
+  const [activeTab, setActiveTab] = useState('overview')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab) setActiveTab(tab)
+  }, [searchParams])
 
   const stats = [
     { label: 'Messages Sent', value: user.messagesSent },
     { label: 'Communities', value: user.communitiesJoined },
     { label: 'Days Active', value: 28 }
   ]
+
+  const handleUpgradeToPro = () => {
+    router.push('/payments?plan=pro')
+  }
+
+  const handleShareProfile = () => {
+    const profileUrl = `${window.location.origin}/u/${user.lolId}`
+    navigator.clipboard.writeText(profileUrl)
+    alert('Profile link copied to clipboard!')
+  }
+
+  const handleMyCommunities = () => {
+    router.push('/communities?my=true')
+  }
+
+  const handleGoPro = () => {
+    router.push('/payments')
+  }
 
   return (
     <div className="min-h-screen pb-20 bg-gray-900">
@@ -41,7 +68,10 @@ export default function ProfilePage() {
           </div>
           
           {!user.pro && (
-            <button className="w-full px-6 py-3 mb-4 font-medium text-white gradient-bg rounded-2xl">
+            <button 
+              onClick={handleUpgradeToPro}
+              className="w-full px-6 py-3 mb-4 font-medium text-white transition-transform gradient-bg rounded-2xl hover:scale-105"
+            >
               Upgrade to Pro - 3,000 UGX/week
             </button>
           )}
@@ -64,7 +94,10 @@ export default function ProfilePage() {
       <div className="px-6 mb-6">
         <h2 className="mb-4 text-lg font-semibold text-white">Quick Actions</h2>
         <div className="space-y-3">
-          <button className="flex items-center justify-between w-full p-4 text-left transition-all glass-card hover:bg-white/10">
+          <button 
+            onClick={handleShareProfile}
+            className="flex items-center justify-between w-full p-4 text-left transition-all glass-card hover:bg-white/10 active:scale-95"
+          >
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-10 h-10 bg-blue-600 rounded-2xl">
                 <span>🔗</span>
@@ -77,7 +110,10 @@ export default function ProfilePage() {
             <span className="text-gray-400">→</span>
           </button>
 
-          <button className="flex items-center justify-between w-full p-4 text-left transition-all glass-card hover:bg-white/10">
+          <button 
+            onClick={handleGoPro}
+            className="flex items-center justify-between w-full p-4 text-left transition-all glass-card hover:bg-white/10 active:scale-95"
+          >
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-10 h-10 bg-green-600 rounded-2xl">
                 <span>⚡</span>
@@ -90,7 +126,10 @@ export default function ProfilePage() {
             <span className="text-gray-400">→</span>
           </button>
 
-          <button className="flex items-center justify-between w-full p-4 text-left transition-all glass-card hover:bg-white/10">
+          <button 
+            onClick={handleMyCommunities}
+            className="flex items-center justify-between w-full p-4 text-left transition-all glass-card hover:bg-white/10 active:scale-95"
+          >
             <div className="flex items-center gap-3">
               <div className="flex items-center justify-center w-10 h-10 bg-purple-600 rounded-2xl">
                 <span>👥</span>
@@ -109,22 +148,22 @@ export default function ProfilePage() {
       <div className="px-6">
         <h2 className="mb-4 text-lg font-semibold text-white">Settings</h2>
         <div className="space-y-3">
-          <button className="w-full p-4 text-left transition-all glass-card hover:bg-white/10">
+          <button className="w-full p-4 text-left transition-all glass-card hover:bg-white/10 active:scale-95">
             <div className="font-medium text-white">Privacy & Security</div>
             <div className="text-sm text-gray-400">Manage your privacy settings</div>
           </button>
 
-          <button className="w-full p-4 text-left transition-all glass-card hover:bg-white/10">
+          <button className="w-full p-4 text-left transition-all glass-card hover:bg-white/10 active:scale-95">
             <div className="font-medium text-white">Notifications</div>
             <div className="text-sm text-gray-400">Control your notification preferences</div>
           </button>
 
-          <button className="w-full p-4 text-left transition-all glass-card hover:bg-white/10">
+          <button className="w-full p-4 text-left transition-all glass-card hover:bg-white/10 active:scale-95">
             <div className="font-medium text-white">Help & Support</div>
             <div className="text-sm text-gray-400">Get help and contact support</div>
           </button>
 
-          <button className="w-full p-4 text-left text-red-400 transition-all glass-card hover:bg-red-400/10">
+          <button className="w-full p-4 text-left text-red-400 transition-all glass-card hover:bg-red-400/10 active:scale-95">
             <div className="font-medium">Logout</div>
             <div className="text-sm text-red-400/70">Sign out of your account</div>
           </button>
