@@ -70,13 +70,15 @@ export async function searchCommunities(searchTerm: string) {
   }
 }
 
-// src/services/firebase.ts - Update joinCommunity function
 export async function joinCommunity(communityId: string, userId: string): Promise<{ success: boolean; message: string }> {
   try {
+    console.log('Attempting to join community:', { communityId, userId });
+    
     const communityRef = doc(db, 'communities', communityId);
     const communitySnap = await getDoc(communityRef);
     
     if (!communitySnap.exists()) {
+      console.log('Community not found:', communityId);
       return { success: false, message: 'Community not found' };
     }
 
@@ -86,13 +88,19 @@ export async function joinCommunity(communityId: string, userId: string): Promis
     const memberSnap = await getDocs(memberQuery);
     
     if (!memberSnap.empty) {
+      console.log('User already member:', userId);
       return { success: false, message: 'Already a member of this community' };
     }
 
     const community = communitySnap.data();
+    console.log('Current community data:', community);
+    
+    // Update members count
     await updateDoc(communityRef, {
       membersCount: (community.membersCount || 0) + 1
     });
+    
+    console.log('Updated members count');
     
     // Add user to community members subcollection
     await addDoc(membersRef, {
@@ -101,10 +109,22 @@ export async function joinCommunity(communityId: string, userId: string): Promis
       role: 'member'
     });
     
+    console.log('Added user to members subcollection');
+    
     return { success: true, message: 'Successfully joined community!' };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error joining community:', error);
-    return { success: false, message: 'Failed to join community' };
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
+    
+    // Provide more specific error messages
+    if (error.code === 'permission-denied') {
+      return { success: false, message: 'Permission denied. Check Firebase rules.' };
+    } else if (error.code === 'not-found') {
+      return { success: false, message: 'Community not found' };
+    } else {
+      return { success: false, message: `Failed to join community: ${error.message}` };
+    }
   }
 }
 
