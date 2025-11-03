@@ -4,10 +4,11 @@ import { useRouter } from 'next/navigation'
 
 interface CommunityCardProps {
   community: Community
-  onJoin: (communityId: string) => void
+  onJoin: (communityId: string, communityTitle: string) => void
+  isJoining?: boolean
 }
 
-export default function CommunityCard({ community, onJoin }: CommunityCardProps) {
+export default function CommunityCard({ community, onJoin, isJoining = false }: CommunityCardProps) {
   const router = useRouter()
 
   const handleCardClick = () => {
@@ -16,7 +17,7 @@ export default function CommunityCard({ community, onJoin }: CommunityCardProps)
 
   const handleJoin = (e: React.MouseEvent) => {
     e.stopPropagation() // Prevent card click when joining
-    onJoin(community.id)
+    onJoin(community.id, community.title)
   }
 
   return (
@@ -35,9 +36,10 @@ export default function CommunityCard({ community, onJoin }: CommunityCardProps)
         <span className="text-xs text-gray-500 capitalize">{community.type}</span>
         <button 
           onClick={handleJoin}
-          className="px-4 py-2 text-sm font-medium text-white transition-transform bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl hover:scale-105"
+          disabled={isJoining}
+          className="px-4 py-2 text-sm font-medium text-white transition-transform bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Join
+          {isJoining ? 'Joining...' : 'Join'}
         </button>
       </div>
     </div>

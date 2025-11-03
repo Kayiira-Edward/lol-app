@@ -70,30 +70,41 @@ export async function searchCommunities(searchTerm: string) {
   }
 }
 
-export async function joinCommunity(communityId: string, userId: string) {
+// src/services/firebase.ts - Update joinCommunity function
+export async function joinCommunity(communityId: string, userId: string): Promise<{ success: boolean; message: string }> {
   try {
     const communityRef = doc(db, 'communities', communityId);
     const communitySnap = await getDoc(communityRef);
     
-    if (communitySnap.exists()) {
-      const community = communitySnap.data();
-      await updateDoc(communityRef, {
-        membersCount: (community.membersCount || 0) + 1
-      });
-      
-      // Add user to community members subcollection
-      const membersRef = collection(db, 'communities', communityId, 'members');
-      await addDoc(membersRef, {
-        userId,
-        joinedAt: Date.now()
-      });
-      
-      return true;
+    if (!communitySnap.exists()) {
+      return { success: false, message: 'Community not found' };
     }
-    return false;
+
+    // Check if user is already a member
+    const membersRef = collection(db, 'communities', communityId, 'members');
+    const memberQuery = query(membersRef, where('userId', '==', userId));
+    const memberSnap = await getDocs(memberQuery);
+    
+    if (!memberSnap.empty) {
+      return { success: false, message: 'Already a member of this community' };
+    }
+
+    const community = communitySnap.data();
+    await updateDoc(communityRef, {
+      membersCount: (community.membersCount || 0) + 1
+    });
+    
+    // Add user to community members subcollection
+    await addDoc(membersRef, {
+      userId,
+      joinedAt: Date.now(),
+      role: 'member'
+    });
+    
+    return { success: true, message: 'Successfully joined community!' };
   } catch (error) {
     console.error('Error joining community:', error);
-    return false;
+    return { success: false, message: 'Failed to join community' };
   }
 }
 

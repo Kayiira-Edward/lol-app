@@ -51,16 +51,21 @@ export default function Home() {
     router.push('/communities')
   }
 
-  const handleJoinCommunity = async (communityId: string) => {
+  const handleJoinCommunity = async (communityId: string, communityTitle: string) => {
     try {
       // TODO: Replace with actual user ID from auth
-      const success = await joinCommunity(communityId, 'current-user-id')
-      if (success) {
+      const result = await joinCommunity(communityId, 'current-user-id')
+      
+      if (result.success) {
+        showToast(`Joined ${communityTitle}!`, 'success')
         // Refresh communities to update member counts
         loadTrendingCommunities()
+      } else {
+        showToast(result.message, result.message.includes('Already') ? 'info' : 'error')
       }
     } catch (error) {
       console.error('Error joining community:', error)
+      showToast('Failed to join community', 'error')
     }
   }
 

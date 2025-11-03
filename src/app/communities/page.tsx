@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import CommunityCard from '@/components/CommunityCard'
 import SearchBar from '@/components/SearchBar'
 import { getAllCommunities, searchCommunities, createCommunity, joinCommunity } from '@/services/firebase'
+import { useToast } from '@/context/ToastContext'
 import { Community } from '@/types'
 
 export default function CommunitiesPage() {
@@ -16,7 +17,10 @@ export default function CommunitiesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newCommunity, setNewCommunity] = useState({ title: '', description: '' })
+  const [joiningCommunity, setJoiningCommunity] = useState<string | null>(null)
+  
   const router = useRouter()
+  const { showToast } = useToast()
 
   useEffect(() => {
     loadCommunities()
@@ -33,6 +37,7 @@ export default function CommunitiesPage() {
       setFilteredCommunities(allCommunities as Community[])
     } catch (error) {
       console.error('Error loading communities:', error)
+      showToast('Failed to load communities', 'error')
     } finally {
       setIsLoading(false)
     }
@@ -47,16 +52,24 @@ export default function CommunitiesPage() {
     }
   }
 
-  const handleJoinCommunity = async (communityId: string) => {
+  const handleJoinCommunity = async (communityId: string, communityTitle: string) => {
+    setJoiningCommunity(communityId)
     try {
       // TODO: Replace with actual user ID from auth
-      const success = await joinCommunity(communityId, 'current-user-id')
-      if (success) {
+      const result = await joinCommunity(communityId, 'current-user-id')
+      
+      if (result.success) {
+        showToast(`Joined ${communityTitle}!`, 'success')
         // Refresh communities to update member counts
         loadCommunities()
+      } else {
+        showToast(result.message, result.message.includes('Already') ? 'info' : 'error')
       }
     } catch (error) {
       console.error('Error joining community:', error)
+      showToast('Failed to join community', 'error')
+    } finally {
+      setJoiningCommunity(null)
     }
   }
 
@@ -66,9 +79,11 @@ export default function CommunitiesPage() {
         await createCommunity(newCommunity)
         setShowCreateModal(false)
         setNewCommunity({ title: '', description: '' })
+        showToast('Community created successfully!', 'success')
         loadCommunities() // Refresh list
       } catch (error) {
         console.error('Error creating community:', error)
+        showToast('Failed to create community', 'error')
       }
     }
   }
@@ -142,7 +157,8 @@ export default function CommunitiesPage() {
               <CommunityCard
                 key={community.id}
                 community={community}
-                onJoin={() => handleJoinCommunity(community.id)}
+                onJoin={() => handleJoinCommunity(community.id, community.title)}
+                isJoining={joiningCommunity === community.id}
               />
             ))
           )}
@@ -176,7 +192,7 @@ export default function CommunitiesPage() {
       {/* Create Community Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/50">
-          <div className="w-full max-w-md p-6 glass-card">
+          <div className="w-full max-w-md p-6 glass-card animate-slide-up">
             <h3 className="mb-4 text-lg font-semibold text-white">Create Community</h3>
             <div className="space-y-4">
               <div>
